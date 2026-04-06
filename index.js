@@ -1,95 +1,162 @@
 /**
  * Novel Forge — SillyTavern Extension
  * ────────────────────────────────────
- * Reads the current SillyTavern chat and opens Novel Forge
- * in a popup window, passing the chat data via postMessage.
+ * Reads the current SillyTavern chat and displays Novel Forge
+ * in a floating overlay panel inside SillyTavern (no popup window).
  *
- * Install:
- *   Extensions → Install Extension → enter the raw GitHub URL of this folder
- *   e.g. https://raw.githubusercontent.com/YOUR_USER/novel-forge-st/main/
- *
- * Config:
- *   Set NOVEL_FORGE_URL to your deployed Novel Forge app URL.
+ * Install URL (in SillyTavern → Extensions → Install Extension):
+ *   https://github.com/blueeu7/novel-forge-st
  */
 
 import { getContext } from '../../../extensions.js';
 
-// ── Default Novel Forge URL (user-configurable in the panel) ─────────────────
-// Replace with your own deployed Novel Forge URL:
-const DEFAULT_URL = 'https://novel-forge.replit.app/';
 const STORAGE_KEY = 'novel_forge_url';
+// Default to the deployed Novel Forge app — user can change in panel
+const DEFAULT_URL = 'https://novel-forge-web.replit.app/';
 
-const getSavedUrl = () =>
-  localStorage.getItem(STORAGE_KEY) || DEFAULT_URL;
+const getSavedUrl = () => localStorage.getItem(STORAGE_KEY) || DEFAULT_URL;
+const saveUrl = (url) => localStorage.setItem(STORAGE_KEY, url.trim());
 
-const saveUrl = (url) => localStorage.setItem(STORAGE_KEY, url);
-
-// ── Panel HTML ────────────────────────────────────────────────────────────────
-const panelHtml = `
-<div id="novel-forge-panel">
-  <div class="nf-url-row">
-    <input
-      id="novel-forge-url-input"
-      class="text_pole"
-      type="text"
-      placeholder="Novel Forge 应用地址"
-      title="输入 Novel Forge 部署的 URL"
-    />
-  </div>
-  <div id="novel-forge-open-btn">📖 打开 Novel Forge（转小说）</div>
-  <div id="novel-forge-status"></div>
-</div>
-`;
-
-const drawerHtml = `
+// ── Extension settings drawer ─────────────────────────────────────────────────
+const DRAWER_HTML = `
 <div class="inline-drawer" id="novel-forge-drawer">
   <div class="inline-drawer-toggle inline-drawer-header">
     <b>📖 Novel Forge</b>
     <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
   </div>
   <div class="inline-drawer-content">
-    ${panelHtml}
+    <div id="novel-forge-panel">
+      <label class="nf-label">Novel Forge 地址</label>
+      <div class="nf-url-row">
+        <input id="nf-url-input" class="text_pole" type="text"
+               placeholder="https://your-app.replit.app/" />
+      </div>
+      <div id="nf-open-btn" class="menu_button menu_button_icon">
+        <i class="fa-solid fa-book-open"></i>
+        <span>打开 Novel Forge · 转小说</span>
+      </div>
+      <div id="nf-status"></div>
+    </div>
   </div>
 </div>
 `;
 
+// ── Floating overlay ──────────────────────────────────────────────────────────
+function buildOverlay(url) {
+  return `
+<div id="nf-overlay">
+  <div id="nf-modal">
+    <div id="nf-header">
+      <span id="nf-title">
+        <i class="fa-solid fa-book-open" style="margin-right:6px;opacity:.8"></i>
+        Novel Forge · 酒馆聊天转小说
+      </span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button id="nf-reload-btn" title="重新发送聊天数据">
+          <i class="fa-solid fa-rotate-right"></i>
+        </button>
+        <button id="nf-close-btn" title="关闭">✕</button>
+      </div>
+    </div>
+    <div id="nf-loading">
+      <div class="nf-spinner"></div>
+      <p>正在加载 Novel Forge…</p>
+    </div>
+    <iframe id="nf-iframe" src="${escapeAttr(url)}" allow="clipboard-write"></iframe>
+  </div>
+</div>`;
+}
+
+function escapeAttr(str) {
+  return str.replace(/"/g, '&quot;');
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 jQuery(async () => {
-  // Append drawer to extensions settings panel
-  $('#extensions_settings2').append(drawerHtml);
-
-  // Fill saved URL
-  $('#novel-forge-url-input').val(getSavedUrl());
-
-  // Save URL on change
-  $('#novel-forge-url-input').on('input', () => {
-    saveUrl($('#novel-forge-url-input').val().trim());
-  });
-
-  // Open button
-  $('#novel-forge-open-btn').on('click', openNovelForge);
+  $('#extensions_settings2').append(DRAWER_HTML);
+  $('#nf-url-input').val(getSavedUrl());
+  $('#nf-url-input').on('input', () => saveUrl($('#nf-url-input').val()));
+  $('#nf-open-btn').on('click', openNovelForge);
 });
 
-// ── Main action ───────────────────────────────────────────────────────────────
+// ── Open / close overlay ──────────────────────────────────────────────────────
+let pendingPayload = null;
+
 function openNovelForge() {
   const url = getSavedUrl();
-  if (!url) {
-    setStatus('⚠️ 请先填写 Novel Forge 地址');
-    return;
-  }
+  if (!url) { setStatus('⚠️ 请填写 Novel Forge 地址'); return; }
 
   const context = getContext();
   const { chat, characters, characterId, name1, name2 } = context;
-
   if (!chat || chat.length === 0) {
     setStatus('⚠️ 当前没有聊天记录，请先开始一段对话');
     return;
   }
 
   const character = characters?.[characterId];
+  pendingPayload = buildPayload({ chat, character, name1, name2 });
 
-  // Build the chat payload in Novel Forge's expected format
-  const chatPayload = {
+  // Remove any existing overlay then inject a fresh one
+  $('#nf-overlay').remove();
+  $('body').append(buildOverlay(url));
+
+  const iframe = document.getElementById('nf-iframe');
+
+  // Show loading indicator until iframe loads
+  iframe.addEventListener('load', () => {
+    $('#nf-loading').hide();
+    sendPayload(iframe);
+  });
+
+  // Also react to Novel Forge's READY signal (fired by stBridge)
+  window.addEventListener('message', handleReady);
+
+  // Reload button resends the current chat data
+  $(document).on('click', '#nf-reload-btn', () => sendPayload(iframe));
+
+  // Close on ✕ button or backdrop click
+  $(document).on('click', '#nf-close-btn', closeOverlay);
+  $(document).on('click', '#nf-overlay', (e) => {
+    if (e.target.id === 'nf-overlay') closeOverlay();
+  });
+
+  // ESC key to close
+  $(document).on('keydown.nfoverlay', (e) => {
+    if (e.key === 'Escape') closeOverlay();
+  });
+
+  setStatus(`已加载（${chat.length} 条消息）`);
+}
+
+function sendPayload(iframe) {
+  if (!pendingPayload || !iframe?.contentWindow) return;
+  try {
+    iframe.contentWindow.postMessage(pendingPayload, '*');
+  } catch (e) {
+    // cross-origin; Novel Forge will receive via READY handshake
+  }
+}
+
+function handleReady(e) {
+  if (e.data?.type !== 'NOVEL_FORGE_READY') return;
+  const iframe = document.getElementById('nf-iframe');
+  if (iframe) sendPayload(iframe);
+  window.removeEventListener('message', handleReady);
+}
+
+function closeOverlay() {
+  $('#nf-overlay').remove();
+  $(document).off('keydown.nfoverlay');
+  $(document).off('click', '#nf-close-btn');
+  $(document).off('click', '#nf-reload-btn');
+  $(document).off('click', '#nf-overlay');
+  window.removeEventListener('message', handleReady);
+  pendingPayload = null;
+}
+
+// ── Build chat payload ────────────────────────────────────────────────────────
+function buildPayload({ chat, character, name1, name2 }) {
+  return {
     type: 'NOVEL_FORGE_CHAT',
     characterName: name2 || character?.name || '角色',
     userName: name1 || '用户',
@@ -101,57 +168,17 @@ function openNovelForge() {
       name: msg.is_user
         ? (name1 || '用户')
         : (name2 || character?.name || '角色'),
-      is_user: Boolean(msg.is_user),
+      is_user:   Boolean(msg.is_user),
       is_system: Boolean(msg.is_system),
-      mes: msg.mes || '',
+      mes:       msg.mes || '',
       send_date: msg.send_date || '',
-      // pass swipes so Novel Forge can pick the active one
-      swipes: Array.isArray(msg.swipes) ? msg.swipes : undefined,
-      swipe_id: typeof msg.swipe_id === 'number' ? msg.swipe_id : undefined,
-      extra: msg.extra || undefined,
+      swipes:    Array.isArray(msg.swipes) ? msg.swipes : undefined,
+      swipe_id:  typeof msg.swipe_id === 'number' ? msg.swipe_id : undefined,
+      extra:     msg.extra || undefined,
     })),
   };
-
-  setStatus(`正在打开 Novel Forge（${chat.length} 条消息）...`);
-
-  // Open popup
-  const popup = window.open(
-    url,
-    'novel-forge-popup',
-    'width=1300,height=860,resizable=yes,scrollbars=yes',
-  );
-
-  if (!popup) {
-    setStatus('❌ 弹窗被浏览器拦截，请允许弹窗后重试');
-    return;
-  }
-
-  // Send chat data once the Novel Forge page has loaded.
-  // We retry a few times because the page load time varies.
-  let attempts = 0;
-  const maxAttempts = 10;
-  const interval = setInterval(() => {
-    attempts++;
-    try {
-      popup.postMessage(chatPayload, '*');
-    } catch (e) {
-      // cross-origin errors are normal while the page is loading
-    }
-    if (attempts >= maxAttempts) {
-      clearInterval(interval);
-      setStatus(`✅ 已发送 ${chat.length} 条聊天记录`);
-    }
-  }, 800);
-
-  popup.addEventListener('message', (e) => {
-    if (e.data?.type === 'NOVEL_FORGE_READY') {
-      clearInterval(interval);
-      popup.postMessage(chatPayload, '*');
-      setStatus(`✅ 已同步 ${chat.length} 条聊天记录`);
-    }
-  });
 }
 
 function setStatus(msg) {
-  $('#novel-forge-status').text(msg);
+  $('#nf-status').text(msg);
 }
