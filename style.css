@@ -1,0 +1,42 @@
+/* Novel Forge SillyTavern Extension Styles */
+
+#novel-forge-panel {
+  padding: 8px 0;
+}
+
+#novel-forge-panel .nf-url-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+#novel-forge-panel .nf-url-row input {
+  flex: 1;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+#novel-forge-open-btn {
+  width: 100%;
+  text-align: center;
+  cursor: pointer;
+  background: var(--SmartThemeBodyColor, #c37a3a);
+  color: var(--SmartThemeBorderColor, #fff);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  transition: opacity 0.15s;
+}
+
+#novel-forge-open-btn:hover {
+  opacity: 0.85;
+}
+
+#novel-forge-status {
+  font-size: 11px;
+  color: var(--grey500, #888);
+  text-align: center;
+  margin-top: 4px;
+}
