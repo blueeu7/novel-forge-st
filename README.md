@@ -1,55 +1,47 @@
 # Novel Forge — SillyTavern Extension
 
-一键将当前 SillyTavern 聊天转换为中文小说。
+一键将当前 SillyTavern 聊天转换为中文小说，以悬浮窗形式直接在酒馆内操作，无需跳转网页。
 
 ## 安装步骤
 
-### 1. 准备 Novel Forge 应用
+### 1. 在酒馆中安装拓展
 
-Novel Forge 是一个运行在浏览器中的独立 Web 应用（可部署到 Replit）。
-如果你已经有部署好的 Novel Forge URL，跳至第 2 步。
-
-### 2. 将本拓展上传到 GitHub
-
-在 GitHub 新建一个公开仓库（如 `novel-forge-st`），然后将此文件夹中的以下三个文件上传：
+打开 SillyTavern → **拓展（Extensions）** → **安装拓展（Install Extension）**，粘贴：
 
 ```
-manifest.json
-index.js
-style.css
+https://github.com/blueeu7/novel-forge-st
 ```
 
-### 3. 在酒馆中安装
+点击安装，等待完成后重启 SillyTavern。
 
-打开 SillyTavern → **拓展** → **安装拓展（从 URL）**，粘贴以下地址（替换为你的 GitHub 用户名和仓库名）：
+### 2. 配置 Novel Forge 地址
 
-```
-https://raw.githubusercontent.com/blueeu7/novel-forge-st/main
-```
+安装后，在拓展面板中找到 **📖 Novel Forge** 展开项，在输入框中填入你的 Novel Forge 应用地址：
 
-安装后重启 SillyTavern。
+- 如果使用公共演示版，保持默认地址即可
+- 如果自己部署了 Novel Forge，填入你的 Replit 部署地址
 
-### 4. 配置 Novel Forge 地址
+### 3. 使用
 
-拓展安装后，在 SillyTavern 的扩展面板中找到 **Novel Forge** 区域，填入你的 Novel Forge 部署地址（默认已填入 Replit 官方演示地址）。
-
-### 5. 使用
-
-1. 打开任意角色聊天
-2. 点击 **📖 打开 Novel Forge（转小说）**
-3. Novel Forge 将在弹窗中打开，并自动接收当前聊天内容
-4. 在 Novel Forge 中选择楼层范围、配置生成参数，然后开始生成
+1. 在酒馆中打开任意角色聊天
+2. 在拓展面板点击 **打开 Novel Forge · 转小说**
+3. **Novel Forge 以悬浮窗形式直接在酒馆内打开**（无弹窗拦截问题）
+4. 聊天内容自动同步至 Novel Forge
+5. 选择楼层范围、配置章节风格，开始生成小说
+6. 点击右上角 ✕ 或按 ESC 关闭悬浮窗
 
 ## 特性
 
-- ✅ 自动同步当前聊天（无需导出文件）
-- ✅ 传递角色设定、场景描述
-- ✅ 支持 swipes（多回答）自动选取正确版本
-- ✅ 在 Novel Forge 中可选择任意楼层范围
+- ✅ **悬浮窗模式**：直接在酒馆内显示，无需跳转或弹窗
+- ✅ 自动同步当前聊天（无需手动导出文件）
+- ✅ 支持选择楼层范围（第 N 楼 到 第 M 楼）
+- ✅ 传递角色设定、人物描述、场景信息
+- ✅ 支持 swipes 自动取最新版本
 - ✅ 支持多章节连续生成、单章重生成、断点续写
+- ✅ 按 ESC 或点击背景快速关闭
 
 ## 注意事项
 
-- Novel Forge 弹窗需要浏览器允许弹出窗口
 - API Key 仅存储在你本地浏览器中，不会上传到任何服务器
-- 如遇弹窗被拦截，请在地址栏右侧允许此站点的弹窗
+- 悬浮窗内的 Novel Forge 与酒馆主页面完全独立，关闭后不影响聊天
+- 若切换角色或发送新消息，关闭后重新点击即可同步最新聊天
