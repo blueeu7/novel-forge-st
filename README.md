@@ -24,7 +24,7 @@ style.css
 打开 SillyTavern → **拓展** → **安装拓展（从 URL）**，粘贴以下地址（替换为你的 GitHub 用户名和仓库名）：
 
 ```
-https://raw.githubusercontent.com/YOUR_USERNAME/novel-forge-st/main
+https://raw.githubusercontent.com/blueeu7/novel-forge-st/main
 ```
 
 安装后重启 SillyTavern。
