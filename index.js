@@ -11,8 +11,8 @@
 import { getContext } from '../../../extensions.js';
 
 const STORAGE_KEY = 'novel_forge_url';
-// Default to the deployed Novel Forge app — user can change in panel
-const DEFAULT_URL = 'https://novel-forge-web.replit.app/';
+// No hardcoded default — user must fill in their deployed Novel Forge URL
+const DEFAULT_URL = '';
 
 const getSavedUrl = () => localStorage.getItem(STORAGE_KEY) || DEFAULT_URL;
 const saveUrl = (url) => localStorage.setItem(STORAGE_KEY, url.trim());
@@ -26,11 +26,12 @@ const DRAWER_HTML = `
   </div>
   <div class="inline-drawer-content">
     <div id="novel-forge-panel">
-      <label class="nf-label">Novel Forge 地址</label>
+      <label class="nf-label">Novel Forge 部署地址</label>
       <div class="nf-url-row">
-        <input id="nf-url-input" class="text_pole" type="text"
-               placeholder="https://your-app.replit.app/" />
+        <input id="nf-url-input" class="text_pole" type="url"
+               placeholder="https://xxxx.replit.app/" />
       </div>
+      <p class="nf-hint">在 Replit 项目点击 Deploy 可找到部署地址</p>
       <div id="nf-open-btn" class="menu_button menu_button_icon">
         <i class="fa-solid fa-book-open"></i>
         <span>打开 Novel Forge · 转小说</span>
