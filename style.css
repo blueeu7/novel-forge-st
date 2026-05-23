@@ -8,26 +8,74 @@
   display: block;
   font-size: 11px;
   color: var(--SmartThemeEmColor, #aaa);
-  margin-bottom: 4px;
-  margin-top: 8px;
+  margin: 8px 0 4px;
   text-transform: uppercase;
   letter-spacing: .05em;
 }
 
-.nf-url-row {
-  margin-bottom: 8px;
-}
-
-.nf-url-row input {
+#novel-forge-panel input.text_pole,
+#novel-forge-panel select.text_pole,
+#novel-forge-panel textarea.text_pole {
   width: 100%;
   font-size: 12px;
+  box-sizing: border-box;
+}
+
+#novel-forge-panel textarea.text_pole {
+  resize: vertical;
+  min-height: 56px;
+  font-family: inherit;
 }
 
 .nf-hint {
   font-size: 10px;
   color: var(--SmartThemeEmColor, #888);
-  margin: -4px 0 8px;
+  margin: 4px 0 8px;
   line-height: 1.4;
+}
+
+/* radio rows */
+.nf-radio-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.nf-radio {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--SmartThemeBodyColor, #ccc);
+  cursor: pointer;
+}
+
+.nf-radio input {
+  margin: 0;
+}
+
+/* collapsible sections */
+.nf-collapsible {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .2s ease, opacity .2s ease;
+  opacity: 0;
+}
+
+.nf-collapsible.nf-open {
+  max-height: 600px;
+  opacity: 1;
+  padding-bottom: 4px;
+}
+
+.nf-pair {
+  display: flex;
+  gap: 8px;
+}
+
+.nf-pair > div {
+  flex: 1;
+  min-width: 0;
 }
 
 /* range inputs */
@@ -93,7 +141,7 @@
 }
 
 #nf-preview {
-  margin: 6px 0 10px;
+  margin: 8px 0 10px;
   font-size: 11px;
   color: var(--SmartThemeEmColor, #888);
   font-style: italic;
@@ -127,7 +175,6 @@
   animation: nf-fade-in .15s ease;
 }
 
-/* when modal has been positioned by drag/resize, drop the flex centering */
 #nf-overlay.nf-positioned {
   display: block;
 }
@@ -149,8 +196,8 @@
   box-shadow: 0 32px 100px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255,255,255,.08);
   animation: nf-slide-up .2s ease;
   background: #13111f;
-  min-width: 400px;
-  min-height: 300px;
+  min-width: 480px;
+  min-height: 360px;
 }
 
 #nf-modal.nf-maximized {
@@ -194,9 +241,13 @@
   pointer-events: none;
 }
 
-#nf-reload-btn,
-#nf-max-btn,
-#nf-close-btn {
+.nf-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#nf-header button {
   background: none;
   border: none;
   color: rgba(255,255,255,.5);
@@ -209,49 +260,135 @@
   flex-shrink: 0;
 }
 
-#nf-reload-btn:hover,
-#nf-max-btn:hover,
-#nf-close-btn:hover {
+#nf-header button:hover {
   background: rgba(255,255,255,.12);
   color: #fff;
 }
 
-#nf-loading {
-  position: absolute;
-  inset: 48px 0 0;
+/* toolbar */
+#nf-toolbar {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  background: #13111f;
-  color: rgba(255,255,255,.5);
-  font-size: 13px;
-  gap: 14px;
-  z-index: 1;
-  pointer-events: none;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #181527;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
-.nf-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid rgba(255,255,255,.1);
-  border-top-color: #c37a3a;
-  border-radius: 50%;
-  animation: nf-spin .7s linear infinite;
+#nf-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+  color: #ddd;
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .12s, border-color .12s, opacity .12s;
 }
 
-@keyframes nf-spin {
-  to { transform: rotate(360deg); }
+#nf-toolbar button:hover:not(:disabled) {
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.18);
 }
 
-#nf-iframe {
+#nf-toolbar button:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+#nf-toolbar button.nf-primary {
+  background: linear-gradient(180deg, #c37a3a, #9a5d28);
+  border-color: rgba(255,255,255,.15);
+  color: #fff;
+}
+
+#nf-toolbar button.nf-primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.nf-divider {
+  width: 1px;
+  height: 18px;
+  background: rgba(255,255,255,.1);
+  margin: 0 2px;
+}
+
+.nf-flex-spacer {
   flex: 1;
-  border: none;
-  width: 100%;
+}
+
+#nf-chapter-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#nf-chapter-nav.nf-hidden {
+  display: none;
+}
+
+#nf-chapter-label {
+  font-size: 12px;
+  color: #ccc;
+  min-width: 110px;
+  text-align: center;
+}
+
+/* meta line */
+#nf-meta {
+  padding: 6px 12px;
+  background: #15131f;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  font-size: 11px;
+  color: rgba(255,255,255,.55);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* output */
+#nf-output-wrap {
+  flex: 1;
+  display: flex;
+  min-height: 0;
   background: #fff;
 }
 
-/* resize handle in bottom-right corner */
+#nf-output {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #fdfaf3;
+  color: #2a2620;
+  font-family: 'Source Han Serif', 'Songti SC', serif;
+  font-size: 15px;
+  line-height: 1.85;
+  padding: 24px 32px;
+  resize: none;
+  outline: none;
+  white-space: pre-wrap;
+}
+
+#nf-status-bar {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  background: #15131f;
+  border-top: 1px solid rgba(255,255,255,.05);
+  font-size: 11px;
+  color: rgba(255,255,255,.55);
+}
+
+#nf-progress {
+  font-family: ui-monospace, monospace;
+}
+
+/* resize handle */
 #nf-resize-handle {
   position: absolute;
   right: 0;
@@ -263,9 +400,9 @@
   background:
     linear-gradient(135deg,
       transparent 0%, transparent 50%,
-      rgba(255,255,255,.25) 50%, rgba(255,255,255,.25) 60%,
+      rgba(0,0,0,.25) 50%, rgba(0,0,0,.25) 60%,
       transparent 60%, transparent 70%,
-      rgba(255,255,255,.25) 70%, rgba(255,255,255,.25) 80%,
+      rgba(0,0,0,.25) 70%, rgba(0,0,0,.25) 80%,
       transparent 80%);
 }
 
@@ -273,8 +410,7 @@
   display: none;
 }
 
-/* invisible mask layered over the iframe during drag/resize so that
-   pointer events don't get eaten by the cross-origin iframe */
+/* drag mask layered over the textarea during drag/resize */
 #nf-drag-mask {
   display: none;
   position: absolute;
