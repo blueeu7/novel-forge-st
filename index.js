@@ -211,6 +211,7 @@ function buildOverlay() {
         Novel Forge · 小说工坊
       </span>
       <div class="nf-header-actions">
+        <button id="nf-min-btn" title="最小化"><i class="fa-solid fa-window-minimize"></i></button>
         <button id="nf-max-btn" title="最大化 / 还原"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
         <button id="nf-close-btn" title="关闭">✕</button>
       </div>
@@ -249,6 +250,15 @@ function buildOverlay() {
 
     <div id="nf-resize-handle" title="拖动以缩放"></div>
     <div id="nf-drag-mask"></div>
+  </div>
+
+  <div id="nf-pill" title="点击恢复小说工坊">
+    <div id="nf-pill-spinner"></div>
+    <div id="nf-pill-text">
+      <div id="nf-pill-title">📖 小说工坊</div>
+      <div id="nf-pill-progress">已最小化</div>
+    </div>
+    <button id="nf-pill-close" title="关闭工坊">✕</button>
   </div>
 </div>`;
 }
@@ -375,7 +385,10 @@ function applyFilters(chat, filters) {
 }
 
 function setStatus(msg) { $('#nf-status').text(msg); }
-function setProgress(msg) { $('#nf-progress').text(msg); }
+function setProgress(msg) {
+  $('#nf-progress').text(msg);
+  $('#nf-pill-progress').text(msg);
+}
 
 // ── Workshop state ────────────────────────────────────────────────────────────
 let chapters = [];          // [{ text, range: [lo, hi], status: 'pending'|'done'|'error' }]
@@ -445,8 +458,20 @@ function updateChapterLabel() {
 function bindOverlayEvents() {
   $(document).on('click', '#nf-close-btn', closeOverlay);
   $(document).on('click', '#nf-max-btn', toggleMaximize);
-  $(document).on('click', '#nf-overlay', (e) => { if (e.target.id === 'nf-overlay') closeOverlay(); });
-  $(document).on('keydown.nfoverlay', (e) => { if (e.key === 'Escape') closeOverlay(); });
+  $(document).on('click', '#nf-min-btn', minimizeOverlay);
+  $(document).on('click', '#nf-pill', (e) => {
+    if (e.target.closest('#nf-pill-close')) return;
+    restoreOverlay();
+  });
+  $(document).on('click', '#nf-pill-close', closeOverlay);
+  $(document).on('click', '#nf-overlay', (e) => {
+    if (e.target.id === 'nf-overlay') closeOverlay();
+  });
+  $(document).on('keydown.nfoverlay', (e) => {
+    if (e.key !== 'Escape') return;
+    if ($('#nf-overlay').hasClass('nf-minimized')) restoreOverlay();
+    else closeOverlay();
+  });
 
   $(document).on('click', '#nf-gen-btn', startGenerate);
   $(document).on('click', '#nf-stop-btn', stopGenerate);
@@ -472,6 +497,9 @@ function closeOverlay() {
   $(document).off('keydown.nfoverlay');
   $(document).off('click', '#nf-close-btn');
   $(document).off('click', '#nf-max-btn');
+  $(document).off('click', '#nf-min-btn');
+  $(document).off('click', '#nf-pill');
+  $(document).off('click', '#nf-pill-close');
   $(document).off('click', '#nf-overlay');
   $(document).off('click', '#nf-gen-btn');
   $(document).off('click', '#nf-stop-btn');
@@ -481,6 +509,20 @@ function closeOverlay() {
   $(document).off('click', '#nf-next-chapter');
   $(document).off('click', '#nf-regen-btn');
   $(document).off('input', '#nf-output');
+}
+
+function minimizeOverlay() {
+  const overlay = document.getElementById('nf-overlay');
+  if (!overlay) return;
+  overlay.classList.add('nf-minimized');
+  // reflect whether a generation is currently in flight
+  $('#nf-pill').toggleClass('nf-pill-active', isGenerating);
+}
+
+function restoreOverlay() {
+  const overlay = document.getElementById('nf-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('nf-minimized');
 }
 
 // ── Generation ────────────────────────────────────────────────────────────────
@@ -540,6 +582,7 @@ function setGenerating(on) {
   isGenerating = on;
   $('#nf-gen-btn').prop('disabled', on);
   $('#nf-stop-btn').prop('disabled', !on);
+  $('#nf-pill').toggleClass('nf-pill-active', on);
 }
 
 async function regenerateCurrentChapter() {
