@@ -9,6 +9,7 @@
   font-size: 11px;
   color: var(--SmartThemeEmColor, #aaa);
   margin-bottom: 4px;
+  margin-top: 8px;
   text-transform: uppercase;
   letter-spacing: .05em;
 }
@@ -27,6 +28,75 @@
   color: var(--SmartThemeEmColor, #888);
   margin: -4px 0 8px;
   line-height: 1.4;
+}
+
+/* range inputs */
+.nf-range-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.nf-range-row .nf-num {
+  flex: 1;
+  font-size: 12px;
+  text-align: center;
+  min-width: 0;
+}
+
+.nf-range-sep {
+  font-size: 11px;
+  color: var(--SmartThemeEmColor, #888);
+}
+
+/* quick chips */
+.nf-quick-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.nf-chip {
+  flex: 1 0 auto;
+  min-width: 0;
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: var(--SmartThemeBodyColor, #ccc);
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+
+.nf-chip:hover {
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.2);
+}
+
+/* toggle rows */
+.nf-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--SmartThemeBodyColor, #ccc);
+  margin: 4px 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.nf-toggle input {
+  margin: 0;
+}
+
+#nf-preview {
+  margin: 6px 0 10px;
+  font-size: 11px;
+  color: var(--SmartThemeEmColor, #888);
+  font-style: italic;
 }
 
 #nf-open-btn {
@@ -57,6 +127,11 @@
   animation: nf-fade-in .15s ease;
 }
 
+/* when modal has been positioned by drag/resize, drop the flex centering */
+#nf-overlay.nf-positioned {
+  display: block;
+}
+
 @keyframes nf-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -73,6 +148,18 @@
   flex-direction: column;
   box-shadow: 0 32px 100px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255,255,255,.08);
   animation: nf-slide-up .2s ease;
+  background: #13111f;
+  min-width: 400px;
+  min-height: 300px;
+}
+
+#nf-modal.nf-maximized {
+  width: 100vw !important;
+  height: 100vh !important;
+  left: 0 !important;
+  top: 0 !important;
+  border-radius: 0;
+  max-width: none;
 }
 
 @keyframes nf-slide-up {
@@ -89,6 +176,12 @@
   border-bottom: 1px solid rgba(255, 255, 255, .08);
   flex-shrink: 0;
   gap: 8px;
+  cursor: move;
+  user-select: none;
+}
+
+#nf-modal.nf-maximized #nf-header {
+  cursor: default;
 }
 
 #nf-title {
@@ -98,9 +191,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  pointer-events: none;
 }
 
 #nf-reload-btn,
+#nf-max-btn,
 #nf-close-btn {
   background: none;
   border: none;
@@ -115,6 +210,7 @@
 }
 
 #nf-reload-btn:hover,
+#nf-max-btn:hover,
 #nf-close-btn:hover {
   background: rgba(255,255,255,.12);
   color: #fff;
@@ -153,4 +249,36 @@
   border: none;
   width: 100%;
   background: #fff;
+}
+
+/* resize handle in bottom-right corner */
+#nf-resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  z-index: 3;
+  background:
+    linear-gradient(135deg,
+      transparent 0%, transparent 50%,
+      rgba(255,255,255,.25) 50%, rgba(255,255,255,.25) 60%,
+      transparent 60%, transparent 70%,
+      rgba(255,255,255,.25) 70%, rgba(255,255,255,.25) 80%,
+      transparent 80%);
+}
+
+#nf-modal.nf-maximized #nf-resize-handle {
+  display: none;
+}
+
+/* invisible mask layered over the iframe during drag/resize so that
+   pointer events don't get eaten by the cross-origin iframe */
+#nf-drag-mask {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  cursor: inherit;
 }
