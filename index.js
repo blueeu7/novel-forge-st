@@ -267,6 +267,22 @@ function escapeAttr(str) {
   return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+function sanitizeFilename(name) {
+  return String(name)
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '_')
+    .replace(/\.{2,}/g, '_')
+    .slice(0, 200) || 'novel';
+}
+
+function isHttpUrl(url) {
+  try {
+    const u = new URL(url);
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 jQuery(async () => {
   $('#extensions_settings2').append(DRAWER_HTML);
@@ -277,7 +293,7 @@ jQuery(async () => {
 function initDrawer() {
   // API source
   const api = getApi();
-  $(`input[name="nf-api-source"][value="${api.source}"]`).prop('checked', true);
+  $('input[name="nf-api-source"]').filter(function () { return $(this).val() === api.source; }).prop('checked', true);
   toggleCustomApi(api.source === 'custom');
   $('input[name="nf-api-source"]').on('change', () => {
     const source = $('input[name="nf-api-source"]:checked').val();
@@ -329,7 +345,7 @@ function initDrawer() {
 
   // Generation mode
   const gen = getGen();
-  $(`input[name="nf-gen-mode"][value="${gen.mode}"]`).prop('checked', true);
+  $('input[name="nf-gen-mode"]').filter(function () { return $(this).val() === gen.mode; }).prop('checked', true);
   toggleChapterOpts(gen.mode === 'chapter');
   $('input[name="nf-gen-mode"]').on('change', () => {
     const mode = $('input[name="nf-gen-mode"]:checked').val();
@@ -409,7 +425,7 @@ function openWorkshop() {
       setStatus('⚠️ 自定义 API：请填写 Base URL / Key / 模型');
       return;
     }
-    if (!/^https?:\/\//i.test(api.baseUrl)) { setStatus('⚠️ Base URL 需以 http(s):// 开头'); return; }
+    if (!isHttpUrl(api.baseUrl)) { setStatus('⚠️ Base URL 必须是有效的 http(s):// 地址'); return; }
   }
 
   $('#nf-overlay').remove();
@@ -696,6 +712,7 @@ function buildUserPrompt({ chapter, character, ctx, prev, index, total, mode }) 
 
 // ── Custom API (OpenAI-compatible, streaming) ────────────────────────────────
 async function streamCustomApi({ systemPrompt, userPrompt, baseUrl, apiKey, model, temperature, maxTokens, onDelta }) {
+  if (!isHttpUrl(baseUrl)) throw new Error('Base URL 必须是有效的 http(s):// 地址');
   const url = baseUrl.replace(/\/+$/, '') + '/chat/completions';
   activeAbort = new AbortController();
   const r = await fetch(url, {
@@ -718,8 +735,7 @@ async function streamCustomApi({ systemPrompt, userPrompt, baseUrl, apiKey, mode
   });
 
   if (!r.ok) {
-    const text = await r.text().catch(() => '');
-    throw new Error(`HTTP ${r.status} ${text.slice(0, 300)}`);
+    throw new Error(`API 请求失败 (HTTP ${r.status})`);
   }
   if (!r.body) throw new Error('响应没有 body');
 
@@ -790,7 +806,7 @@ function downloadAll() {
   const blob = new Blob([parts.join('\n\n')], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const name2 = getContext().name2 || 'novel';
+  const name2 = sanitizeFilename(getContext().name2 || 'novel');
   const date = new Date().toISOString().slice(0, 10);
   a.href = url;
   a.download = `${name2}-${date}.txt`;
